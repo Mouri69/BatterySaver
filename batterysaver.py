@@ -1,23 +1,41 @@
 import psutil
 import time
-from plyer import notification
+import tkinter as tk
+from tkinter import messagebox
+import winsound
+import threading
 
-def check_battery():
-    battery = psutil.sensors_battery()
-    
-    if battery.power_plugged and battery.percent >= 95:
-        notification.notify(
-            title="Battery Alert",
-            message="Battery is fully charged! You can unplug your charger now.",
-            app_icon=None,  # You can specify a custom icon path here
-            timeout=10
-        )
+class BatterySaver:
+    def __init__(self):
+        self.is_running = True
+        self.root = tk.Tk()
+        self.root.withdraw()  # Hide the main window
+        
+    def check_battery(self):
+        while self.is_running:
+            battery = psutil.sensors_battery()
+            
+            if battery.power_plugged and battery.percent >= 95:
+                # Play alert sound
+                winsound.PlaySound('SystemExclamation', winsound.SND_ALIAS)
+                
+                # Show message box
+                messagebox.showinfo(
+                    "Battery Alert",
+                    "Battery is fully charged! You can unplug your charger now."
+                )
+            
+            time.sleep(300)  # Check every 5 minutes
 
-def main():
-    print("Battery monitoring started...")
-    while True:
-        check_battery()
-        time.sleep(300)  # Check every 5 minutes
+    def run(self):
+        # Start battery monitoring in a separate thread
+        monitor_thread = threading.Thread(target=self.check_battery)
+        monitor_thread.daemon = True
+        monitor_thread.start()
+        
+        # Run the main window
+        self.root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    app = BatterySaver()
+    app.run()
